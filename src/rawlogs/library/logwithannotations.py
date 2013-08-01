@@ -13,7 +13,7 @@ class LogWithAnnotations(RawLog):
         self._annotations = annotations
     
     def get_tags(self):
-        return self.annotations.get('tags', [])
+        return self._annotations.get('tags', [])
         
     def get_annotations(self):
-        return self.annotations
+        return self._annotations
