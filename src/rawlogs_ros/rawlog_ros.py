@@ -1,6 +1,7 @@
 from rawlogs import RawSignal, logger
 from rawlogs.library import LogWithAnnotations
 from rosbag_utils import read_bag_stats, rosbag_info_cached, read_bag_stats_progress
+import os
 
 
 __all__ = ['ROSLog']
@@ -11,6 +12,9 @@ class ROSLog(LogWithAnnotations):
     def __init__(self, filename, annotations={}):
         LogWithAnnotations.__init__(self, annotations=annotations)
         self.bag = filename
+        if not os.path.exists(filename):
+            msg = 'File not existing: %r' % filename
+            raise ValueError(msg)
         
         self._bag_info = None  # cached result
         

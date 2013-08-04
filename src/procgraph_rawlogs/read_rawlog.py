@@ -47,8 +47,8 @@ class RawlogRead(IteratorGenerator):
             self.signals = []
             for s in signal_list:
                 if not s in all_signals:
-                    msg = ('Signal %r not present in log (available: %r)' % 
-                            (s, all_signals))
+                    msg = ('Signal %r not present in log %r (available: %r)' % 
+                            (s, id_rawlog, all_signals.keys()))
                     raise BadConfig(msg, self, 'signals')
                 self.signals.append(s)
 
