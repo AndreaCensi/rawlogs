@@ -37,7 +37,10 @@ setup(
       ]
     },
     install_requires=[
-     'BootOlympics', 'QuickApp', 'ros_node_utils', 'PyContracts', 'conf_tools'
+        'QuickApp',
+        # 'ROSNodeUtils',
+        'PyContracts',
+        'ConfTools'
     ],
 
     tests_require=['nose']
