@@ -24,14 +24,7 @@ class RawSignal(object):
     @contract(returns='list(str)')
     def get_resources(self):
         """ Returns the list of files that this signal needs. """
-        
-#     
-#     @abstractmethod
-#     @contract(returns='list(str)')
-#     def get_annotations(self):
-#         """ Returns free-form dict """
-#         pass
-
+      
     @abstractmethod
     @contract(returns='tuple(float, float)')
     def get_time_bounds(self):

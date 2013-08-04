@@ -1,0 +1,10 @@
+--- model test_read_rawlog
+""" Reads from a Rawlog """
+config rawlog """ ID of rawlog """
+config config = '' """ colon-separated list of additional ConfTools config dirs. """
+config signals = ''
+
+import procgraph_rawlogs
+
+|read_rawlog rawlog=$rawlog config_dirs=$config signals=$signals| -> |info|
+
