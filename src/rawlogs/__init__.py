@@ -8,3 +8,4 @@ logger.setLevel(logging.DEBUG)
 
 from .interface import *
 from .configuration import *
+from .db import *
