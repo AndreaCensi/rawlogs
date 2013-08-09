@@ -7,7 +7,7 @@ __all__ = ['RawLog']
 
 class RawLog(object):    
     """ 
-        A log is a collection of related signals with possibly different
+        A RawLog is a collection of related signals with possibly different
         reference frames with attached resources (files).
     """
     
@@ -32,7 +32,8 @@ class RawLog(object):
     @contract(returns='list(str)')
     def get_tags(self):
         """ Returns a list of tags used to organize the logs. """
-        return []
+        ann = self.get_annotations()
+        return ann.get('tags', [])
     
     @contract(returns='dict')
     def get_annotations(self):
@@ -41,5 +42,10 @@ class RawLog(object):
             attributes. 
         """
         return {}
+    
+    
+    
+    
+    
     
     

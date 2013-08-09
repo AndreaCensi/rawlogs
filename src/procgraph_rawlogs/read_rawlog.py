@@ -14,7 +14,7 @@ class RawlogRead(IteratorGenerator):
     Block.alias('read_rawlog')
     Block.output_is_defined_at_runtime('The signals read from the log.')
     
-    Block.config('rawlog', 'Rawlog id')
+    Block.config('rawlog', 'Rawlog ID or code spec')
     Block.config('config_dirs', 'Additional config dirs', default='') 
     
     Block.config('signals', 'Which signals to output (and in what order). '
@@ -22,18 +22,15 @@ class RawlogRead(IteratorGenerator):
                  ' will be all signals (TODO: in the original order).',
                  default=None)
 
-    Block.config('quiet', 'If true, disables advancements status messages.',
-                 default=False)
-
     def get_output_signals(self):
         dirnames = self.config.config_dirs.split(':')
         for d in dirnames:
             if d:
                 GlobalConfig.global_load_dir(d)
         
-        id_rawlog = self.config.rawlog
+        rawlog = self.config.rawlog
         
-        self.rawlog = get_conftools_rawlogs().instance(id_rawlog)
+        id_rawlog, self.rawlog = get_conftools_rawlogs().instance_smarter(rawlog)
         all_signals = self.rawlog.get_signals()
         
         if self.config.signals is None:

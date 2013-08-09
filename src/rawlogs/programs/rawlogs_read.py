@@ -1,6 +1,8 @@
 from .main import RawlogsMainCmd
+from conf_tools.utils import check_is_in
 from quickapp import QuickAppBase
 from rawlogs import get_conftools_rawlogs
+
 
 __all___ = ['RawLogsInfo']
 
@@ -31,8 +33,12 @@ def read_log(rawlog, signals=None, start=None, stop=None):
    
     if not signals:
         signals = list(log_signals.keys())
-    
+    else:
+        for x in signals:
+            check_is_in('signal', x, log_signals)
+
     # sync to first signal
+    
     signal = log_signals[signals[0]]
     bounds = signal.get_time_bounds()
     

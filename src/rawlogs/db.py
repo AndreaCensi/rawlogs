@@ -21,3 +21,6 @@ def get_rawlogs_by_tag_it(tags):
         
         if set(tags) <= set(ltags):
             yield id_rawlog, rawlog
+
+
+

@@ -1,14 +1,16 @@
 from .main import RawlogsMainCmd
-from conf_tools.utils import friendly_path
+from conf_tools.utils import friendly_path, indent
+from pprint import pformat
 from quickapp import QuickAppBase
 from rawlogs import get_conftools_rawlogs
-from conf_tools.utils.indent_string import indent
-from pprint import pformat
+
 
 __all___ = ['RawLogsInfo']
 
 
 class RawLogsInfo(RawlogsMainCmd, QuickAppBase):
+    """ Displays the signals defined in the raw log """
+    
     cmd = 'info'
     
     def define_program_options(self, params):
@@ -40,11 +42,15 @@ def summarize(rawlog):
         s += ' - %s\n' % friendly_path(x)
 
     s += 'Signals:\n'
-    for x, v in rawlog.get_signals().items():
+    signals = rawlog.get_signals()
+    names = sorted(signals.keys())
+    
+    for x in names:
+        v = signals[x]
         t0, t1 = v.get_time_bounds()
         length = t1 - t0
         reftime = v.get_time_reference()
-        s += '%50s  %10s %4.2f  %s\n' % (x, reftime, length, v)
+        s += '%-55s  %10s %4.2f %10.4f %10.4f %s\n' % (x, reftime, length, t0, t1, v)
         
     s += 'Tags: %s\n' % rawlog.get_tags()
 

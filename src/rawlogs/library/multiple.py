@@ -53,8 +53,13 @@ class Multiple(LogWithAnnotations):
             raise ValueError(msg)
 
         it = heapq.merge(*tuple(iterators))
-        for x in it:
-            yield x
+        for timestamp, (name, value) in it:
+            if (((start is not None) and (start > timestamp)) or 
+                ((stop is not None) and (stop < timestamp))):
+                raise Exception('Bug: unexpected signal %r %r (start %s stop %s)' % (timestamp, name, start, stop))
+            if not name in topics:
+                raise Exception('unrequested signal %r not in %r' % (name, topics))
+            yield timestamp, (name, value)
 
 
 @contract(master='dict', others='seq(dict)')
