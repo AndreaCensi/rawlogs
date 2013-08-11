@@ -1,7 +1,7 @@
-from rawlogs import get_conftools_rawlogs
-from rawlogs.interface.rawlog import RawLog
+from rawlogs import RawLog, RawSignal, get_conftools_rawlogs
 
-__all__ = ['LogPart']
+
+__all__ = ['LogPart', 'LogPartSignal']
 
 
 class LogPart(RawLog):
@@ -46,7 +46,7 @@ class LogPart(RawLog):
             
 
  
-class LogPartSignal(object):
+class LogPartSignal(RawSignal):
     def __init__(self, s, t0, t1):
         self.s = s
         self.t0 = t0
@@ -69,9 +69,3 @@ class LogPartSignal(object):
 
      
                 
-                
-            
-    
-    
-    
-    
