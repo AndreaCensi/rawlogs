@@ -7,7 +7,8 @@ __all__ = ['Multiple']
 
 
 class Multiple(LogWithAnnotations):    
-
+    """ A set of logs in parallel """
+    
     @contract(annotations='dict', logs='list(str|code_spec)')
     def __init__(self, logs, annotations={}):
         library = get_conftools_rawlogs()

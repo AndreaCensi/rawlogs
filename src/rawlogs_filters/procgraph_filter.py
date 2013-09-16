@@ -3,29 +3,22 @@ from contracts import contract
 from procgraph.core.registrar import default_library
 from rawlogs import RawLog, get_conftools_rawlogs, RawSignal
 import warnings
+from decent_logs import WithInternalLog
 
 
 __all__ = ['ProcgraphFilter']
 
 
-class ProcgraphFilter(RawLog):
+class ProcgraphFilter(RawLog, WithInternalLog):
 
     """ Filters a Rawlog with a Procgraph model. """
     
-    @contract(rawlog='str|code_spec', model='list[2]', outputs='dict(str:str)', inputs='dict(str:str)')
-    def __init__(self, rawlog, model, inputs, outputs):
+    @contract(rawlog='str|code_spec', model='list[2]',
+              outputs='None|dict(str:str)', inputs='dict(str:str)')
+    def __init__(self, rawlog, model, inputs, outputs=None):
         _, self.rawlog = get_conftools_rawlogs().instance_smarter(rawlog)
         
-        model_name, model_config = model
-        if '.' in model_name:
-            tokens = model_name.split('.')
-            module = '.'.join(tokens[:-1])
-            __import__(module)
-            model_name = tokens[-1]     
-        
-        self.model_name = model_name
-        self.model_config = model_config
-        
+        self.model = model
         self.inputs = inputs
         self.outputs = outputs
     
@@ -48,6 +41,8 @@ class ProcgraphFilter(RawLog):
         
         timeref = '-'.join(sorted(timerefs))
         signals = {}
+        if self.outputs is None:
+            raise Exception('TODO: assing names automatically')
         for _, signal_name in self.outputs.items():
             warnings.warn('to finish')
             signal_type = '???'  # XXX
@@ -60,7 +55,7 @@ class ProcgraphFilter(RawLog):
         
     def read(self, topics, start=None, stop=None):
         signals = self.get_signals()
-        print('signals: %s' % signals)
+        self.info('signals: %s' % signals)
         have = set(signals.keys())
         required = set(topics)
         
@@ -68,9 +63,9 @@ class ProcgraphFilter(RawLog):
             msg = 'Wrong topics: %s' % topics
             raise ValueError(msg)
          
-        print('required: %s' % required)
-        print('have: %s' % have)
-        print('required-have: %s' % (required - have))
+        self.debug('required: %s' % required)
+        self.debug('have: %s' % have)
+        self.debug('required-have: %s' % (required - have))
         if (required - have):
             msg = 'Missing topics: %s' % topics
             raise ValueError(msg) 
@@ -84,12 +79,20 @@ class ProcgraphFilter(RawLog):
             if self.outputs[x] in topics:
                 output2mine[self.outputs[x]] = x
             else:
-                print('not adding %s  %s ' % (x, self.outputs[x]))
+                self.debug('not adding %s  %s ' % (x, self.outputs[x]))
             
-        print output2mine
-        # initialization
-        model = default_library.instance(self.model_name, name='filter',
-                                         config=self.model_config)
+        
+        model_name, model_config = self.model
+        if '.' in model_name:
+            tokens = model_name.split('.')
+            module = '.'.join(tokens[:-1])
+            __import__(module)
+            model_name = tokens[-1]     
+        
+        
+        
+        model = default_library.instance(model_name, name='filter',
+                                         config=model_config)
 
         model.init()
         
@@ -99,6 +102,7 @@ class ProcgraphFilter(RawLog):
         last_timestamps = defaultdict(lambda: None)
         
         for timestamp, (topic, value) in log:
+            # self.debug('pushing %s %s' % (timestamp, topic))
             name = original2mine[topic]
             model.from_outside_set_input(name, value, timestamp)
             
@@ -108,12 +112,14 @@ class ProcgraphFilter(RawLog):
             for x, model_signal in output2mine.items(): 
                 timestamp = model.get_output_timestamp(model_signal)
                 value = model.get_output(model_signal)
+                # self.debug('seeing %s %s' % (timestamp, x))
                 if timestamp != last_timestamps[x]:
                     yield timestamp, (x, value)
+                    # self.debug('yielding %s %s' % (timestamp, x))
                     assert x in topics, (x, topics)
                 last_timestamps[x] = timestamp    
         
-        self.model.finish()
+        model.finish()
         
     @contract(returns='list(str)')
     def get_tags(self):

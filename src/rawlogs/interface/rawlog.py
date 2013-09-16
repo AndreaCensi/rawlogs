@@ -43,9 +43,26 @@ class RawLog(object):
         """
         return {}
     
-    
-    
-    
-    
-    
-    
+    def read_signal_all(self, signal_name):
+        """ Read the complete values for a signal.
+            Returns array of timestamp values, and a sequence of values. """
+        import numpy as np
+        values = []
+        timestamps = []
+        for timestamp, (name, value) in self.read([signal_name]):
+            assert name == signal_name
+            values.append(value)
+            timestamps.append(timestamp)
+        return np.array(timestamps), values
+
+    def read_signal_all_as_array(self, signal_name):
+        """ returns the data as an array with fields 'timestamp' and 'value' """
+        import numpy as np
+        timestamps, values = self.read_signal_all(signal_name)
+        v0 = np.asarray(values[0])
+        dtype = [('timestamp', 'float'),
+                 ('value', v0.dtype, v0.shape)]
+        x = np.zeros(shape=len(timestamps), dtype=dtype)
+        x['timestamp'] = timestamps
+        x['value'] = values
+        return x

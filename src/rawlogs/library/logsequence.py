@@ -1,14 +1,17 @@
-from .logwithannotations import LogWithAnnotations
+import itertools
+
 from contracts import contract
 from rawlogs import get_conftools_rawlogs
-import itertools
+
+from .logwithannotations import LogWithAnnotations
 from .multiple import _merge_annotations
+from decent_logs import WithInternalLog
 
 
 __all__ = ['LogSequence']
 
 
-class LogSequence(LogWithAnnotations):    
+class LogSequence(LogWithAnnotations, WithInternalLog):    
     """ A set of logs in sequence """
     
     @contract(annotations='dict', logs='list(str|code_spec)')
@@ -25,9 +28,15 @@ class LogSequence(LogWithAnnotations):
         
         for log in self._logs[1:]:
             signals = log.get_signals()
-            if not set(signals) == set(signals0):
-                msg = 'Inconsistent signals:\n- %s\n- %s' % (set(signals0), set(signals))
+            # We cannot introduce new signals
+            if not (set(signals) <= set(signals0)):
+                msg = ('Inconsistent signals:\n- first %s\n- another %s' % 
+                       (set(signals0), set(signals)))
                 raise ValueError(msg)
+            
+            if not set(signals) == set(signals0):
+                self.warn('log does not have all signals:\n- %s\n- %s' % 
+                           (set(signals0), set(signals)))
             
         return signals0
 
@@ -42,7 +51,9 @@ class LogSequence(LogWithAnnotations):
     def read(self, topics, start=None, stop=None):
         iterators = []
         for l in self._logs:
-            it = l.read(topics, start=start, stop=stop)
+            signals = l.get_signals()
+            l_topics = set(topics) & set(signals)
+            it = l.read(l_topics, start=start, stop=stop)
             iterators.append(it)
             
         it = itertools.chain(*tuple(iterators))
