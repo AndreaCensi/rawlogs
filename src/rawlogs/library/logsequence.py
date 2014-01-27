@@ -1,11 +1,12 @@
 import itertools
 
 from contracts import contract
+
+from decent_logs import WithInternalLog
 from rawlogs import get_conftools_rawlogs
 
 from .logwithannotations import LogWithAnnotations
 from .multiple import _merge_annotations
-from decent_logs import WithInternalLog
 
 
 __all__ = ['LogSequence']

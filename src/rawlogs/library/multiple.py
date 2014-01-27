@@ -1,7 +1,11 @@
-from .logwithannotations import LogWithAnnotations
-from contracts import contract
-from rawlogs import get_conftools_rawlogs
 import heapq
+
+from contracts import contract
+
+from rawlogs import get_conftools_rawlogs
+
+from .logwithannotations import LogWithAnnotations
+
 
 __all__ = ['Multiple']
 
@@ -86,12 +90,3 @@ def _merge_annotations(master, others):
                 
                 
                 
-                
-                
-                
-                
-            
-    
-    
-    
-    

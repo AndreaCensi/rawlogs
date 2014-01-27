@@ -4,7 +4,7 @@ from quickapp import QuickAppBase
 from rawlogs import get_conftools_rawlogs
 
 
-__all___ = ['RawLogsInfo']
+__all___ = ['RawLogsRead']
 
 
 class RawLogsRead(RawlogsMainCmd, QuickAppBase):

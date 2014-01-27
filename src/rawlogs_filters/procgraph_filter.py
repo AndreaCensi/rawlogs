@@ -36,9 +36,10 @@ class ProcgraphFilter(RawLog, WithInternalLog):
             timerefs.add(s.get_time_reference())
             resources.update(s.get_resources())
         
-        bounds = min(bounds[0]), max(bounds[1])
-        resources = list(resources)
-        
+        if bounds[0]:  # i.e. we had at least one signal
+            bounds = min(bounds[0]), max(bounds[1])
+            resources = list(resources)
+
         timeref = '-'.join(sorted(timerefs))
         signals = {}
         if self.outputs is None:
@@ -90,35 +91,40 @@ class ProcgraphFilter(RawLog, WithInternalLog):
             model_name = tokens[-1]     
         
         
-        
         model = default_library.instance(model_name, name='filter',
                                          config=model_config)
 
         model.init()
-        
+
         log = self.rawlog.read(self.inputs.values(), start=start, stop=stop)
         
         from collections import defaultdict
         last_timestamps = defaultdict(lambda: None)
+
+        def pipe():
+            while model.has_more():
+                model.update()
+
+                for x, model_signal in output2mine.items():
+                    timestamp = model.get_output_timestamp(model_signal)
+                    value = model.get_output(model_signal)
+                    # self.debug('seeing %s %s' % (timestamp, x))
+                    if timestamp != last_timestamps[x]:
+                        yield timestamp, (x, value)
+                        # self.debug('yielding %s %s' % (timestamp, x))
+                        assert x in topics, (x, topics)
+                    last_timestamps[x] = timestamp
+
         
         for timestamp, (topic, value) in log:
             # self.debug('pushing %s %s' % (timestamp, topic))
             name = original2mine[topic]
             model.from_outside_set_input(name, value, timestamp)
             
-            while model.has_more():
-                model.update()
-                
-            for x, model_signal in output2mine.items(): 
-                timestamp = model.get_output_timestamp(model_signal)
-                value = model.get_output(model_signal)
-                # self.debug('seeing %s %s' % (timestamp, x))
-                if timestamp != last_timestamps[x]:
-                    yield timestamp, (x, value)
-                    # self.debug('yielding %s %s' % (timestamp, x))
-                    assert x in topics, (x, topics)
-                last_timestamps[x] = timestamp    
-        
+            pipe()
+
+        pipe()
+
         model.finish()
         
     @contract(returns='list(str)')

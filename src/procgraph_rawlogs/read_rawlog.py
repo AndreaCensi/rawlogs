@@ -1,9 +1,9 @@
-from procgraph import Block
+from conf_tools import GlobalConfig
+from procgraph import BadConfig, Block
 from procgraph.block_utils import IteratorGenerator
 from rawlogs import get_conftools_rawlogs
-from procgraph import BadConfig
-from conf_tools import GlobalConfig
-    
+
+
 __all__ = ['RawlogRead']
 
 

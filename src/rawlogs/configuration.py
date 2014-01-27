@@ -1,6 +1,6 @@
 from conf_tools import ConfigMaster
 
-__all__ = ['get_conftools_rawlogs']
+__all__ = ['get_conftools_rawlogs', 'get_rawlogs_config']
 
 class RawlogsConfig(ConfigMaster):
     

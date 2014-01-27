@@ -1,7 +1,12 @@
+import os
+import warnings
+
+from contracts import contract
+
 from rawlogs import RawSignal, logger
 from rawlogs.library import LogWithAnnotations
-from rosbag_utils import read_bag_stats, rosbag_info_cached, read_bag_stats_progress
-import os
+from rosbag_utils import (read_bag_stats, rosbag_info_cached,
+    read_bag_stats_progress)
 
 
 __all__ = ['ROSLog']
@@ -9,6 +14,7 @@ __all__ = ['ROSLog']
 
 class ROSLog(LogWithAnnotations):
     
+    @contract(filename='str', annotations='dict')
     def __init__(self, filename, annotations={}):
         LogWithAnnotations.__init__(self, annotations=annotations)
         self.bag = filename
@@ -39,6 +45,7 @@ class ROSLog(LogWithAnnotations):
         return [self.bag]
 
     def read(self, topics, start=None, stop=None, use_stamp_if_available=False):
+        logger.info('read(topics=%s, start=%s,stop=%s)' % (topics, start, stop))
         source = read_bag_stats(self.bag, topics, logger=None, start_time=start, stop_time=stop)
         source = read_bag_stats_progress(source, logger, interval=2)
         
@@ -46,6 +53,10 @@ class ROSLog(LogWithAnnotations):
         for topic, msg, t, _ in source:  
             name = topic
             
+            if not topic in topics:
+                logger.warn('Extra topic.\n\treceived: %r\n\tasked: %r' % (topic, topics))
+                continue
+
             value = msg
             
             if use_stamp_if_available:

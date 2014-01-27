@@ -11,7 +11,6 @@ class RawSignal(object):
     __metaclass__ = ContractsMeta
 
     @abstractmethod
-    # @contract(returns='str')
     def get_signal_type(self):
         """ Returns the type of this signal (string or python class) """        
 

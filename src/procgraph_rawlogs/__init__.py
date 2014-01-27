@@ -12,4 +12,4 @@ from procgraph import pg_add_this_package_models
 pg_add_this_package_models(__file__, __package__)
 
 from .read_rawlog import *
-
+from .video_signal import *
