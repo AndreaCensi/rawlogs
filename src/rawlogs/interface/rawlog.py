@@ -1,4 +1,5 @@
 from abc import abstractmethod
+
 from contracts import ContractsMeta, contract
 
 
@@ -26,7 +27,9 @@ class RawLog(object):
     @abstractmethod
     def read(self, topics, start=None, stop=None):
         """ 
-            Yields a sequence of RawSignalData
+            Yields a sequence of:
+                 timestamp, (name, value)
+                 
         """
         
     @contract(returns='list(str)')

@@ -1,12 +1,12 @@
 from contracts import contract
+import contracts
 
+from compmake.utils.describe import describe_value
 import numpy as np
+from procgraph.core.model_loader import model_from_string
 from procgraph_mplayer.conversions import pg_video_info
 from rawlogs import RawLog, RawSignal
 from rawlogs_filters.procgraph_filter import ProcgraphFilter
-from procgraph.core.model_loader import model_from_string
-import contracts
-from compmake.utils.describe import describe_value
 
 
 __all__ = ['VideoLog']
@@ -37,14 +37,14 @@ class VideoLog(RawLog):
 
     def read(self, topics, start=None, stop=None):
         assert self.signal_name in topics
-        for timestamp, frame in iterate_frames(self.filename, start, stop):
+        for timestamp, frame in iterate_frames(self.filename):
             ok1 = (start is None) or timestamp >= start
             ok2 = (stop is None) or timestamp <= stop
             if ok1 and ok2:
                 yield timestamp, (self.signal_name, frame)
 
 
-def iterate_frames(filename, start=None, stop=None):
+def iterate_frames(filename):
     model_desc = """
      config file
      output rgb
@@ -55,16 +55,12 @@ def iterate_frames(filename, start=None, stop=None):
     contracts.disable_all()
     model = model_from_string(model_desc, config=dict(file=filename))
     model.init()
-    i = 0
     old_ts = None
     while model.has_more():
         model.update()
         timestamp = model.get_output_timestamp('rgb')
         value = model.get_output('rgb')
-
         if old_ts != timestamp:
-#         print timestamp, describe_value(value)
-#         if False:
             yield timestamp, value
         old_ts = timestamp
 # 
@@ -91,7 +87,7 @@ class VideoSignal(RawSignal):
         info = self._get_info()
         w = info['width']
         h = info['height']
-        dt = np.dtype([('value', 'uint8', (h, w, 3))])
+        dt = np.dtype(('uint8', (h, w, 3)))
         return dt
        
     def _get_info(self):
