@@ -61,9 +61,12 @@ class Multiple(LogWithAnnotations):
         for timestamp, (name, value) in it:
             if (((start is not None) and (start > timestamp)) or 
                 ((stop is not None) and (stop < timestamp))):
-                raise Exception('Bug: unexpected signal %r %r (start %s stop %s)' % (timestamp, name, start, stop))
+                msg = ('Bug: unexpected signal %r %r (start %s stop %s)'
+                       % (timestamp, name, start, stop))
+                raise Exception(msg)
             if not name in topics:
-                raise Exception('unrequested signal %r not in %r' % (name, topics))
+                msg = 'unrequested signal %r not in %r' % (name, topics)
+                raise Exception(msg)
             yield timestamp, (name, value)
 
 

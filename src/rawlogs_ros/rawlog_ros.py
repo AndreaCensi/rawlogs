@@ -50,6 +50,7 @@ class ROSLog(LogWithAnnotations):
         source = read_bag_stats_progress(source, logger, interval=2)
         
         oldt = None
+        oldtopic = None  # last topic found
         for topic, msg, t, _ in source:  
             name = topic
             
@@ -74,8 +75,8 @@ class ROSLog(LogWithAnnotations):
                 
             
             if oldt is not None:
-                if oldt == timestamp:
-                    logger.error('Sequence with invalid timestamp? %s' % timestamp)
+                if oldt == timestamp and name == oldtopic:
+                    logger.error('Sequence with repeated timestamp: %s' % timestamp)
             
             if start is not None:
                 if timestamp < start:
@@ -98,6 +99,7 @@ class ROSLog(LogWithAnnotations):
             yield timestamp, (name, value)
 
             oldt = timestamp
+            oldtopic = name
 
         
 

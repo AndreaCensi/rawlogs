@@ -6,6 +6,7 @@ from quickapp import QuickAppBase
 from rawlogs import RawSignal, get_conftools_rawlogs
 
 from .main import RawlogsMainCmd
+from contracts.interface import describe_type
 
 
 __all___ = ['RawLogsRead']
@@ -17,21 +18,28 @@ class RawLogsRead(RawlogsMainCmd, QuickAppBase):
     cmd = 'read'
     
     def define_program_options(self, params):
-        params.add_string("rawlog", help="Raw log ID")
+        params.add_string_list("rawlogs", help="Raw log ID")
         params.add_string_list("signals", help="Signals", default=[])
         params.add_float("start", help="Relative start time", default=None)
         params.add_float("stop", help="Relative stop time", default=None)
         params.add_flag('quiet', help='Do not output current signal')
 
     def go(self):
-        id_rawlog = self.options.rawlog
-        rawlog = get_conftools_rawlogs().instance(id_rawlog)
+        config = get_conftools_rawlogs()
         
-        signals = self.options.signals
-        start = self.options.start
-        stop = self.options.stop
-        read_log(rawlog, signals=signals, start=start, stop=stop,
-                 quiet=self.options.quiet)
+        id_rawlogs = config.expand_names(self.options.rawlogs)
+        
+        for id_rawlog in id_rawlogs:
+            rawlog = config.instance(id_rawlog)
+        
+            signals = self.options.signals
+            start = self.options.start
+            stop = self.options.stop
+            quiet = self.options.quiet
+        
+            read_log(rawlog,
+                     signals=signals, start=start, stop=stop,
+                     quiet=quiet)
         
     
 def read_log(rawlog, signals=None, start=None, stop=None, quiet=False):
@@ -60,6 +68,8 @@ def read_log(rawlog, signals=None, start=None, stop=None, quiet=False):
     print('start: %s' % start)
     print('stop:  %s' % stop) 
     
+    warned = set()  # already warned that we cannot check
+
     for timestamp, (name, value) in rawlog.read(signals, start, stop):  # @UnusedVariable
         
         if not (start <= timestamp <= stop + 0.001):
@@ -70,10 +80,15 @@ def read_log(rawlog, signals=None, start=None, stop=None, quiet=False):
         if not quiet:
             print('reading %.5f (%6.4f) %s' % (timestamp, timestamp - start, name))
         
-        check_type(name, log_signals[name], value)
+        res = check_type(name, log_signals[name], value)
+        if res == False:
+            if not name in warned:
+                print('Cannot check dtype for %s' % signal)
+                warned.add(name)
 
 @contract(name=str, signal=RawSignal, value='*')
 def check_type(name, signal, value):
+    """ Returns False if we don't know how to check. """
     dtype = signal.get_signal_type()
     try:
         def bail(msg):
@@ -81,14 +96,14 @@ def check_type(name, signal, value):
             
         if isinstance(dtype, np.dtype):
             # print 'checking %s for %s' % (dtype, describe_value(value))
-
             if not isinstance(value, np.ndarray):
-                bail('The value is not an array.')
+                bail('The value is not an array (%s).' % describe_type(value))
             its = np.dtype((value.dtype, value.shape))
             if not its == dtype:
                 bail('Datatype does not match (found: %s).' % its)
+            return True
         else:
-            print('Cannot check dtype for %s' % signal)
+            return False
 
 
     except ValueError as e:

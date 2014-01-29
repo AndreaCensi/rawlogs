@@ -14,21 +14,25 @@ class RawLogsInfo(RawlogsMainCmd, QuickAppBase):
     cmd = 'info'
     
     def define_program_options(self, params):
-        params.add_string("rawlog", help="Raw log ID", default=None)
+        params.add_string_list("rawlogs", help="Raw log IDs", default=['*'])
 
     def go(self):
-        id_rawlog = self.options.rawlog
+#         id_rawlog = self.options.rawlog
         
         library = get_conftools_rawlogs()
+#
+#         if id_rawlog is None:
+#             logs = set(library.keys())
+#             if not logs:
+#                 self.error('Could not find any log and none specified.')
+#         else:
+#             logs = [id_rawlog]
+
+        config = get_conftools_rawlogs()
+
+        id_rawlogs = config.expand_names(self.options.rawlogs)
         
-        if id_rawlog is None:
-            logs = set(library.keys())
-            if not logs:
-                self.error('Could not find any log and none specified.')
-        else:
-            logs = [id_rawlog]  
-        
-        for id_rawlog in logs:
+        for id_rawlog in id_rawlogs:
             rawlog = library.instance(id_rawlog)
             print('------- %s ' % id_rawlog)
             print(summarize(rawlog))
