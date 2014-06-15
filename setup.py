@@ -7,7 +7,6 @@ def read(fname):
 
 version = "1.0dev1"
 
-
 setup(
     name='rawlogs',
     author="Andrea Censi",
