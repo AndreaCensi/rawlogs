@@ -1,9 +1,12 @@
-from conf_tools.utils import check_is_in
+import warnings
+
 from contracts import contract
+
+from conf_tools.utils import check_is_in
+from decent_logs import WithInternalLog
+from procgraph.core.model import Model
 from procgraph.core.registrar import default_library
 from rawlogs import RawLog, get_conftools_rawlogs, RawSignal
-import warnings
-from decent_logs import WithInternalLog
 
 
 __all__ = ['ProcgraphFilter']
@@ -11,23 +14,59 @@ __all__ = ['ProcgraphFilter']
 
 class ProcgraphFilter(RawLog, WithInternalLog):
 
-    """ Filters a Rawlog with a Procgraph model. """
+    """ 
+        Filters a Rawlog with a Procgraph model. 
+    
+        model: [name, dict(config1=...)]
+        
+        inputs: 
+            <log signal>: <model signal>
+        outputs: 
+            <model output signal>: <new signal>
+      
+      
+        - id: "rsf-${dir}"
+          desc: "Filtered rawseeds dataset ${dir}"
+          code: 
+          - rawlogs_filters.ProcgraphFilter
+          - rawlog: "rs-${dir}"
+            model: [procgraph_robotics.se2_from_SE2_seq, {}]
+            inputs: 
+              pose_SE2: 0
+            outputs:
+              0: velocity        
+    
+    """
     
     @contract(rawlog='str|code_spec', model='list[2]',
-              outputs='None|dict(str:str)', inputs='dict(str:str)')
+              inputs='dict(str:(str|int))',
+              outputs='None|dict((str|int):str)')
     def __init__(self, rawlog, model, inputs, outputs=None):
         _, self.rawlog = get_conftools_rawlogs().instance_smarter(rawlog)
         
-        self.model = model
+        self.model_module, self.model_name, self.model_config = self._interpret_name(model)
+        # XXX I switched the meanings
         self.inputs = inputs
         self.outputs = outputs
     
+    def _interpret_name(self, spec):
+        model_name, model_config = spec
+        if '.' in model_name:
+            tokens = model_name.split('.')
+            module = '.'.join(tokens[:-1])
+            __import__(module)
+            model_name = tokens[-1]
+        else:
+            module = None
+        return module, model_name, model_config
+
     def get_signals(self):
         bounds = [[], []]
         resources = set()
         log_signals = self.rawlog.get_signals()
         timerefs = set()
-        for _, signal_name in self.inputs.items():
+
+        for signal_name, _ in self.inputs.items():
             check_is_in('signal', signal_name, log_signals)
             s = log_signals[signal_name]
             b = s.get_time_bounds()
@@ -44,17 +83,34 @@ class ProcgraphFilter(RawLog, WithInternalLog):
         signals = {}
         if self.outputs is None:
             raise Exception('TODO: assing names automatically')
-        for _, signal_name in self.outputs.items():
+        for model_output, signal_name in self.outputs.items():
             warnings.warn('to finish')
-            signal_type = '???'  # XXX
+            model_output_dtypes = self._get_model_output_dtypes()
+            signal_type = model_output_dtypes[model_output]
             s = ProcgraphFilterSignal(signal_type, timeref, resources, bounds)
             signals[signal_name] = s
+
+        # also add other signals
+        signals.update(log_signals)
+
         return signals
-        
+
+    @contract(returns='dict(str:*)')
+    def _get_model_output_dtypes(self):
+        """ Returns the declared datatypes for the outputs of the model. """
+        generator = default_library.get_generator_for_block_type(self.model_name)
+        res = {}
+        for out in generator.output:
+            res[out.name] = out.dtype
+        return res
+
     def get_resources(self):
         return self.rawlog.get_resources() 
         
     def read(self, topics, start=None, stop=None):
+        # xxx: don't filter if not requested?
+        # TODO: if all signals are in topics, we don't need ours.
+
         signals = self.get_signals()
         self.info('signals: %s' % signals)
         have = set(signals.keys())
@@ -69,61 +125,81 @@ class ProcgraphFilter(RawLog, WithInternalLog):
         self.debug('required-have: %s' % (required - have))
         if (required - have):
             msg = 'Missing topics: %s' % topics
-            raise ValueError(msg) 
+            raise ValueError(msg)
+
         
-        original2mine = {}
-        for x in self.inputs:
-            original2mine[self.inputs[x]] = x  
+        model = default_library.instance(self.model_name, name='filter',
+                                         config=self.model_config)
         
-        output2mine = {}
-        for x in self.outputs:
-            if self.outputs[x] in topics:
-                output2mine[self.outputs[x]] = x
-            else:
-                self.debug('not adding %s  %s ' % (x, self.outputs[x]))
-            
-        
-        model_name, model_config = self.model
-        if '.' in model_name:
-            tokens = model_name.split('.')
-            module = '.'.join(tokens[:-1])
-            __import__(module)
-            model_name = tokens[-1]     
-        
-        
-        model = default_library.instance(model_name, name='filter',
-                                         config=model_config)
+        if not isinstance(model, Model):
+            msg = 'This is a Block, not a Model: %s/ %s' % (model, type(model))
+
+            warnings.warn('Should I put this automatically in instance()?')
+            generator = model.generator
+            model.define_input_signals_new([x.name for x in generator.input])
+            model.define_output_signals_new([x.name for x in generator.output])
+
 
         model.init()
 
-        log = self.rawlog.read(self.inputs.values(), start=start, stop=stop)
+        # print('Model inputs: %s' % model.get_input_signals_names())
+        # print('Model outputs: %s' % model.get_output_signals_names())
+        for model_out_signal, _ in self.outputs.items():
+            if not model.is_valid_output_name(model_out_signal):
+                msg = ('Not a valid output name %r (%r).' % 
+                       (model_out_signal, model.get_output_signals_names()))
+                raise ValueError(msg)
+            
+        for _, model_in_signal in self.inputs.items():
+            if not model.is_valid_input_name(model_in_signal):
+                msg = ('Not a valid input name %r (%r).' %
+                       (model_in_signal, model.get_input_signals_names()))
+                raise ValueError(msg)
+            
+
+        require = list(set(self.inputs.keys()) | set(topics) - set(self.outputs.values()))
+
+
+        # print('Required to me: %s' % topics)
+        # print('Required by me to original: %s' % require)
+
+        log = self.rawlog.read(require, start=start, stop=stop)
         
         from collections import defaultdict
         last_timestamps = defaultdict(lambda: None)
 
-        def pipe():
-            while model.has_more():
-                model.update()
-
-                for x, model_signal in output2mine.items():
-                    timestamp = model.get_output_timestamp(model_signal)
-                    value = model.get_output(model_signal)
-                    # self.debug('seeing %s %s' % (timestamp, x))
-                    if timestamp != last_timestamps[x]:
-                        yield timestamp, (x, value)
-                        # self.debug('yielding %s %s' % (timestamp, x))
-                        assert x in topics, (x, topics)
-                    last_timestamps[x] = timestamp
-
-        
         for timestamp, (topic, value) in log:
             # self.debug('pushing %s %s' % (timestamp, topic))
-            name = original2mine[topic]
-            model.from_outside_set_input(name, value, timestamp)
-            
-            pipe()
+            if topic in self.inputs:
 
-        pipe()
+                name = self.inputs[topic]
+                model.from_outside_set_input(name, value, timestamp)
+
+                while True:
+                    if isinstance(model, Model):
+                        if not model.has_more():
+                            break
+
+                    model.update()
+
+                    for model_signal, output_signal in self.outputs.items():
+                        timestamp = model.get_output_timestamp(model_signal)
+                        value = model.get_output(model_signal)
+                        # self.debug('seeing %s %s' % (timestamp, x))
+                        if timestamp != last_timestamps[output_signal]:
+                            yield timestamp, (output_signal, value)
+                            # self.debug('yielding %s %s' % (timestamp, x))
+                            warnings.warn('Should only output events that were required')
+                            assert output_signal in topics, (output_signal, topics)
+                        last_timestamps[output_signal] = timestamp
+
+                    if not isinstance(model, Model):
+                        break
+            else:
+                if topic in topics:
+                    yield timestamp, (topic, value)
+
+#         pipe()
 
         model.finish()
         

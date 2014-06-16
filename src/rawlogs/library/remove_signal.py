@@ -8,10 +8,10 @@ __all__ = ['RemoveSignals']
 class RemoveSignals(RawLog):
     """ Removes the given signals from the log """    
 
-    @contract(rawlog=str, signals='list(str)')
+    @contract(rawlog="str|code_spec|isinstance(RawLog)", signals='list(str)')
     def __init__(self, rawlog, signals):
         library = get_conftools_rawlogs()
-        self.log = library.instance(rawlog)
+        _, self.log = library.instance_smarter(rawlog)
         self.signals = signals
         
     def get_signals(self):

@@ -11,12 +11,19 @@ def report_rawlog(rawlog):
     
     r = Report()
 
-    s = ""
+    cols = ['signal', 'bounds']
+    rows = []
+    data = []
     
     for name, signal in rawlog.get_signals().items():
-        s += '%s : %s\n' % (name, signal)
+        rows.append(name)
+        row = [str(signal),
+               signal.get_time_bounds()]
+        data.append(row)
+#         s += '%s : %s\n' % (name, signal)
 
-    r.text('summary', s)
+    r.table('summary', cols=cols, rows=rows, data=data)
+#     r.text('summary', s)
     return r
 
 

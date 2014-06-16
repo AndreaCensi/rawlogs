@@ -7,6 +7,7 @@ from rawlogs import RawSignal, get_conftools_rawlogs
 
 from .main import RawlogsMainCmd
 from contracts.interface import describe_type
+from types import GeneratorType
 
 
 __all___ = ['RawLogsRead']
@@ -70,7 +71,13 @@ def read_log(rawlog, signals=None, start=None, stop=None, quiet=False):
     
     warned = set()  # already warned that we cannot check
 
-    for timestamp, (name, value) in rawlog.read(signals, start, stop):  # @UnusedVariable
+    reading = rawlog.read(signals, start, stop)
+    print('Reading from %s ' % reading)
+
+    if not isinstance(reading, GeneratorType):
+        msg = 'Expected GeneratorType, got %s' % describe_type(reading)
+        raise ValueError(msg)
+    for timestamp, (name, value) in reading:
         
         if not (start <= timestamp <= stop + 0.001):
             msg = 'Messages not filtered (%.5f <= %.5f <= %.5f)' % (start, timestamp, stop)

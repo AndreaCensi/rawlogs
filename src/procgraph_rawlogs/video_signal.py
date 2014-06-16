@@ -1,23 +1,17 @@
 from contracts import contract
 import contracts
 
-from compmake.utils.describe import describe_value
 import numpy as np
 from procgraph.core.model_loader import model_from_string
 from procgraph_mplayer.conversions import pg_video_info
 from rawlogs import RawLog, RawSignal
-from rawlogs_filters.procgraph_filter import ProcgraphFilter
 
 
 __all__ = ['VideoLog']
 
 class VideoLog(RawLog):
     """ 
-        A log that it is in a line-based text format
-        Just need to provide the parse function and the datatypes.
-        
-        The parsing function must provide a (possibly empty) list
-        with tuples (timestamp, name, value).
+        A log from a video file.
     """
 
     @contract(filename=str)

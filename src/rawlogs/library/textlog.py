@@ -1,7 +1,9 @@
 import os
+import string
 
 from contracts import contract
 
+from memos import memo_disk_cache
 from rawlogs import RawLog, RawSignal
 
 
@@ -76,15 +78,24 @@ class RawTextSignal(RawSignal):
         return [self.filename]
     
     def get_time_bounds(self):
+        return memo_disk_cache(self.filename, 'get_time_bounds', self.get_time_bounds_)
+
+    def get_time_bounds_(self):
         """ Returns a tuple of floats representing start and end times for this log. """
         t0, _ = self._get_first_message()
         t1, _ = self._get_last_message()
         return (t0, t1)
 
+    def _is_empty(self, line):
+        line = string.strip(line)
+        return len(line) == 0
+
     def read(self, start=None, stop=None):
         """ Yields timestamp, value """
-        for line in iterate_lines(self._get_stream()):
-            res = self._parse(line)
+        for i, line in enumerate(iterate_lines(self._get_stream())):
+            if self._is_empty(line):
+                continue
+            res = self._parse(line, lineno=i)
             for timestamp, name, value in res:
                 ok1 = (start is None) or timestamp >= start
                 ok2 = (stop is None) or timestamp <= stop
@@ -93,8 +104,11 @@ class RawTextSignal(RawSignal):
 
     def _get_first_message(self):
         """ Returns timestamp, value for the first message in the file. """
-        for line in iterate_lines(self._get_stream()):
-            res = self._parse(line)
+        for i, line in enumerate(iterate_lines(self._get_stream())):
+            if self._is_empty(line):
+                continue
+
+            res = self._parse(line, lineno=i)
             if res:
                 timestamp, _, value = res[0]
                 return timestamp, value
@@ -104,18 +118,28 @@ class RawTextSignal(RawSignal):
 
     def _get_last_message(self):
         """ Returns timestamp, value for the last message in the file. """
-        for line in iterate_lines_reverse(self._get_stream()):
-            res = self._parse(line)
+        for i, line in enumerate(iterate_lines_reverse(self._get_stream())):
+            if self._is_empty(line):
+                continue
+            res = self._parse(line, lineno=-1 - i)
             if res:
                 timestamp, _, value = res[-1]
                 return timestamp, value
+
         msg = 'Empty log'
         raise ValueError(msg)
 
     @contract(returns='list(tuple(float, str, *))')
-    def _parse(self, line):
+    def _parse(self, line, lineno='(not given)'):
         """ Wraps the user-defined parse function """
-        res = self.parse_function(line)
+        try:
+            res = self.parse_function(line)
+        except Exception as e:
+            msg = 'User-defined function in %s returned exception.' % type(self)
+            msg += '\n input: %r' % line
+            msg += '\n line #%d in %s ' % (lineno, self.filename)
+            msg += '\n %s' % e
+            raise ValueError(msg)
         
         if not isinstance(res, list):
             msg = 'Invalid result.\n-> %r' % (str(res))
@@ -157,7 +181,7 @@ def reverse_lines(f):
     if part:
         yield part[::-1]
 
-def reversed_blocks(f, blocksize=4096):
+def reversed_blocks(f, blocksize=4000):
     "Generate blocks of file's contents in reverse order."
     f.seek(0, os.SEEK_END)
     here = f.tell()
@@ -165,6 +189,8 @@ def reversed_blocks(f, blocksize=4096):
         delta = min(blocksize, here)
         here -= delta
         f.seek(here, os.SEEK_SET)
-        yield f.read(delta)
+        block = f.read(delta)
+        print('read block %d ' % len(block))
+        yield block
 
 
