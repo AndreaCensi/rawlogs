@@ -9,7 +9,7 @@ __all__ = ['RawlogRead']
 
 class RawlogRead(IteratorGenerator):
     '''
-        Reads any rawlog.
+        A Procgraph model that reads any rawlog.
     '''
     Block.alias('read_rawlog')
     Block.output_is_defined_at_runtime('The signals read from the log.')

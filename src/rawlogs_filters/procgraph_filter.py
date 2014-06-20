@@ -112,7 +112,7 @@ class ProcgraphFilter(RawLog, WithInternalLog):
         # TODO: if all signals are in topics, we don't need ours.
 
         signals = self.get_signals()
-        self.info('signals: %s' % signals)
+#         self.info('signals: %s' % signals)
         have = set(signals.keys())
         required = set(topics)
         
@@ -159,7 +159,6 @@ class ProcgraphFilter(RawLog, WithInternalLog):
 
         require = list(set(self.inputs.keys()) | set(topics) - set(self.outputs.values()))
 
-
         # print('Required to me: %s' % topics)
         # print('Required by me to original: %s' % require)
 
@@ -198,8 +197,6 @@ class ProcgraphFilter(RawLog, WithInternalLog):
             else:
                 if topic in topics:
                     yield timestamp, (topic, value)
-
-#         pipe()
 
         model.finish()
         
