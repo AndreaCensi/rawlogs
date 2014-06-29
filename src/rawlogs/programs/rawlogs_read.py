@@ -1,4 +1,6 @@
-from contracts import contract, describe_value
+from types import GeneratorType
+
+from contracts import contract, describe_value, describe_type
 
 from conf_tools.utils import check_is_in
 import numpy as np
@@ -6,8 +8,6 @@ from quickapp import QuickAppBase
 from rawlogs import RawSignal, get_conftools_rawlogs
 
 from .main import RawlogsMainCmd
-from contracts.interface import describe_type
-from types import GeneratorType
 
 
 __all___ = ['RawLogsRead']
@@ -77,6 +77,7 @@ def read_log(rawlog, signals=None, start=None, stop=None, quiet=False):
     if not isinstance(reading, GeneratorType):
         msg = 'Expected GeneratorType, got %s' % describe_type(reading)
         raise ValueError(msg)
+
     for timestamp, (name, value) in reading:
         
         if not (start <= timestamp <= stop + 0.001):
@@ -85,13 +86,25 @@ def read_log(rawlog, signals=None, start=None, stop=None, quiet=False):
             raise Exception(msg)
 
         if not quiet:
-            print('reading %.5f (%6.4f) %s' % (timestamp, timestamp - start, name))
+            if isinstance(value, np.ndarray):
+                p = '%15.4f'
+                x = ','.join([p % v for v in value])
+            else:
+                x = str(value)
+
+            M = 120
+            if len(x) > M:
+                x = x[:M - 4] + ' ...'
+                x = x.replace('\n', ' ')
+            print('reading %.5f (%6.4f) %s %s' % (timestamp, timestamp - start, name, x))
         
         res = check_type(name, log_signals[name], value)
         if res == False:
             if not name in warned:
                 print('Cannot check dtype for %s' % signal)
                 warned.add(name)
+
+
 
 @contract(name=str, signal=RawSignal, value='*')
 def check_type(name, signal, value):

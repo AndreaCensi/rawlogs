@@ -1,8 +1,10 @@
-from .main import RawlogsMainCmd
-from conf_tools.utils import friendly_path, indent
 from pprint import pformat
+
+from conf_tools.utils import friendly_path, indent
 from quickapp import QuickAppBase
 from rawlogs import get_conftools_rawlogs
+
+from .main import RawlogsMainCmd
 
 
 __all___ = ['RawLogsInfo']
