@@ -36,6 +36,8 @@ class VideoLog(RawLog):
             ok2 = (stop is None) or timestamp <= stop
             if ok1 and ok2:
                 yield timestamp, (self.signal_name, frame)
+            if stop is not None and timestamp > stop:
+                break
 
 
 def iterate_frames(filename):

@@ -13,6 +13,8 @@ __all__ = ['ROSLog']
 
 class ROSLog(LogWithAnnotations):
     
+    """ A Rawlogs wrapper around a rosbag log. """
+    
     @contract(filename='str', annotations='dict')
     def __init__(self, filename, annotations={}):
         LogWithAnnotations.__init__(self, annotations=annotations)

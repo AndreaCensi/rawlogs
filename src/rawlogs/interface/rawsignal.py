@@ -36,5 +36,7 @@ class RawSignal(object):
     
     def __str__(self):
         cname = type(self).__name__
-        return '%s(timeref=%s;type=%s)' % (cname, self.get_time_reference(), self.get_signal_type())
+        s = ('%s(timeref=%s;type=%s)' % 
+             (cname, self.get_time_reference(), self.get_signal_type()))
+        return s 
 
