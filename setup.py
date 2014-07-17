@@ -10,7 +10,7 @@ version = "1.0dev1"
 setup(
     name='rawlogs',
     author="Andrea Censi",
-    author_email="andrea@cds.caltech.edu",
+    author_email="censi@mit.edu",
     url='http://github.com/AndreaCensi/rawlogs',
     version=version,
     description="Abstractions over log sources",
