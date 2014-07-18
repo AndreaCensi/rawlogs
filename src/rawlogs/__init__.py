@@ -16,5 +16,5 @@ from .db import *
 def jobs_comptests(context):
     from . import unittests
     from comptests import jobs_registrar
-    config = get_conftools_rawlogs()
+    config = get_rawlogs_config()
     return jobs_registrar(context, config)

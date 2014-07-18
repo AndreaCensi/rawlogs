@@ -59,6 +59,8 @@ def iterate_frames(filename):
         if old_ts != timestamp:
             yield timestamp, value
         old_ts = timestamp
+    model.finish()
+    
 # 
 # def iterate_frames(filename, start=None, stop=None):
 #     model_spec = ['mplayer', dict(file=filename)]
