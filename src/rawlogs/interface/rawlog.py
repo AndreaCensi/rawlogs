@@ -22,9 +22,12 @@ class RawLog(object):
     @abstractmethod
     @contract(returns='list(str)')
     def get_resources(self): 
-        """ Returns the physical files needed for this log """
+        """ Returns the physical files needed for this log. """
         
     @abstractmethod
+    @contract(topics='list(str)', 
+              start='None|(float,t)', 
+              stop='None|(float,>t)')
     def read(self, topics, start=None, stop=None):
         """ 
             Yields a sequence of:
