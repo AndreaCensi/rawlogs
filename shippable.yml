@@ -13,7 +13,3 @@ install:
 
 script:
   - nosetests compmake
-
-notifications:
-  email:
-   - censi@mit.edu
