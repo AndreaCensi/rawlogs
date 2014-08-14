@@ -13,3 +13,4 @@ install:
 
 script:
   - nosetests compmake
+  - comptests rawlogs

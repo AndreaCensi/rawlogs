@@ -34,3 +34,5 @@ nosetests.xml
 .project
 .pydevproject
 *.pgc
+.compmake_history.txt
+out-comptests
