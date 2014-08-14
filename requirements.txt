@@ -1,0 +1,3 @@
+QuickApp
+PyContracts
+ConfTools

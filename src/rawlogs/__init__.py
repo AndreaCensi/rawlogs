@@ -11,8 +11,6 @@ from .configuration import *
 from .db import *
 
 
-
-
 def jobs_comptests(context):
     from . import unittests
     from comptests import jobs_registrar

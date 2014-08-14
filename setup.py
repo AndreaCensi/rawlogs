@@ -37,9 +37,8 @@ setup(
     },
     install_requires=[
         'QuickApp',
-        # 'ROSNodeUtils',
         'PyContracts',
-        'ConfTools'
+        'ConfTools',
     ],
 
     tests_require=['nose']
