@@ -1,7 +1,7 @@
 from .generation import for_all_rawlogs
-from blocks.library.timed.checks import check_timed_named
+from blocks import check_timed_named
 from compmake import progress
-from contracts.utils import check_isinstance
+from contracts import check_isinstance
 from rawlogs import RawLog, RawSignal
 from rawlogs.library.logpart import rawlog_bounds
 

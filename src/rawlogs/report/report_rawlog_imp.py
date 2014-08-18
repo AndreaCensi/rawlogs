@@ -4,7 +4,9 @@ from rawlogs import RawLog
 from reprep import Report
 
 
-__all__ = ['report_rawlog']
+__all__ = [
+    'report_rawlog',
+]
 
 @contract(returns=Report, rawlog=RawLog)
 def report_rawlog(rawlog):

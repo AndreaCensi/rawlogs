@@ -62,12 +62,14 @@ class RawLog(object):
         return np.array(timestamps), values
 
     def read_signal_all_as_array(self, signal_name):
-        """ returns the data as an array with fields 'timestamp' and 'value' """
+        """ Returns the data as an array with fields 'timestamp' and 'value' """
         import numpy as np
         timestamps, values = self.read_signal_all(signal_name)
         v0 = np.asarray(values[0])
-        dtype = [('timestamp', 'float'),
-                 ('value', v0.dtype, v0.shape)]
+        dtype = [
+            ('timestamp', 'float'),
+            ('value', v0.dtype, v0.shape),
+        ]
         x = np.zeros(shape=len(timestamps), dtype=dtype)
         x['timestamp'] = timestamps
         x['value'] = values
