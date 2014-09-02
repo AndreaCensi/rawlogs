@@ -12,9 +12,8 @@ class RawlogsConfig(ConfigMaster):
         self.rawlogs = self.add_class_generic('rawlogs', '*.rawlogs.yaml', RawLog)        
         
     def get_default_dir(self):
-        from pkg_resources import resource_filename  # @UnresolvedImport
-        return resource_filename("rawlogs", "configs")
-
+        return "rawlogs.configs"
+        
 
 get_rawlogs_config = RawlogsConfig.get_singleton
 
