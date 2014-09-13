@@ -1,10 +1,12 @@
 from contracts import contract
-
-import numpy as np
 from rawlogs import RawLog, RawSignal, get_conftools_rawlogs, logger
+import numpy as np
 
-
-__all__ = ['LogPart', 'LogPartSignal', 'get_log_parts']
+__all__ = [
+    'LogPart', 
+    'LogPartSignal', 
+    'get_log_parts',
+]
 
 
 class LogPart(RawLog):
@@ -99,7 +101,7 @@ def rawlog_bounds(rawlog):
         a, b = s.get_time_bounds()
         starts.append(a)
         stops.append(b)
-        print('  %s - %s' % (a, b))
+        print('  start %s stop %s len %s' % (a, b, (b-a)))
     res = min(starts), max(stops)
     print(' bounds = %s' % str(res))
     return res
@@ -108,15 +110,15 @@ def rawlog_bounds(rawlog):
 @contract(returns="dict(str:isinstance(LogPart))")
 def get_log_parts(rawlog, length_sec):
     """ Returns a dict chunk-name:LogParts """
+    print('get_log_parts(%s)' % rawlog)
     T0, T1 = rawlog_bounds(rawlog)
     L = (T1 - T0)
-
     n = int(np.ceil(L / length_sec))
 
     if L > 60 * 60 * 8:
         raise ValueError('L = %s too long' % L)
 
-    print('len %s interval %s n %s' % (L, length_sec, n))
+    print('log len %s; slicelen %s; n %s' % (L, length_sec, n))
     parts = {}
 
 

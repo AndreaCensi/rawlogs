@@ -6,7 +6,7 @@ __all__ = ['RawlogsMain', 'RawlogsMainCmd', 'rawlogs_main']
 
 
 class RawlogsMain(QuickMultiCmdApp):
-    """ Main campaign program """
+    """ Utility program to visualize Rawlogs information."""
     
     cmd = 'rawlogs'
     

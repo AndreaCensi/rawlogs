@@ -1,14 +1,13 @@
-import os
-
 from contracts import contract
-
 from rawlogs import RawSignal, logger
 from rawlogs.library import LogWithAnnotations
-from rosbag_utils import (read_bag_stats, rosbag_info_cached,
-    read_bag_stats_progress)
+from rosbag_utils import (read_bag_stats, read_bag_stats_progress, 
+    rosbag_info_cached)
+import os
 
-
-__all__ = ['ROSLog']
+__all__ = [
+    'ROSLog',
+]
 
 
 class ROSLog(LogWithAnnotations):
@@ -24,7 +23,10 @@ class ROSLog(LogWithAnnotations):
             raise ValueError(msg)
         
         self._bag_info = None  # cached result
-        
+    
+    def __str__(self):
+        return 'ROSLog(%s)' % self.bag
+    
     def get_rosbag_info(self):
         if self._bag_info is None:
             self._bag_info = rosbag_info_cached(self.bag)
