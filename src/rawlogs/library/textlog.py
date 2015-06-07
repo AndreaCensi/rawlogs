@@ -5,9 +5,14 @@ from contracts import contract
 
 from memos import memo_disk_cache
 from rawlogs import RawLog, RawSignal
+from contracts.utils import check_isinstance
+from contracts.interface import describe_value
 
 
-__all__ = ['RawTextSignal', 'RawTextLog']
+__all__ = [
+    'RawTextSignal',
+    'RawTextLog',
+]
 
 class RawTextLog(RawLog):
     """ 
@@ -141,10 +146,31 @@ class RawTextSignal(RawSignal):
             msg += '\n %s' % e
             raise ValueError(msg)
         
-        if not isinstance(res, list):
-            msg = 'Invalid result.\n-> %r' % (str(res))
+        if res is None:
+            return []
+
+        try:
+            check_isinstance(res, list)
+            for ri in res:
+                if len(ri) != 3: raise ValueError('length not 3.')
+
+#                 if not isinstance(ri[0], float):
+#                     msg = 'Invalid timestamp'
+#                     raise ValueError(msg)
+
+                check_isinstance(ri[0], float)
+                check_isinstance(ri[1], str)
+            
+        except Exception as e:
+            msg = 'User-defined function in %s returned wrong results.' % type(self)
+            msg += '\n input: %r' % line
+            msg += '\n line #%d in %s ' % (lineno, self.filename)
+            msg += '\n %s' % e
+            msg += '\n %s' % describe_value(res)
             raise ValueError(msg)
         
+        
+            
         r = []
         for (timestamp, signal, value) in res:
             if signal in self.select:

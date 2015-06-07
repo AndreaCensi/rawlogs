@@ -30,6 +30,7 @@ class RawSignal(object):
         """ Returns a tuple of floats representing start and end times for this log. """ 
         pass
     
+    @contract(returns='float')
     def get_length(self):
         a, b = self.get_time_bounds()
         return b - a

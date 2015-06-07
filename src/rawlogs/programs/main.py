@@ -11,7 +11,7 @@ class RawlogsMain(QuickMultiCmdApp):
     cmd = 'rawlogs'
     
     def define_multicmd_options(self, params):
-        params.add_string("config", help="Configuration dirs", default='.')
+        params.add_string("config", short='c', help="Configuration dirs", default='.')
 
     def initial_setup(self):
         GlobalConfig.global_load_dir(self.options.config)

@@ -26,7 +26,7 @@ class RawLog(object):
         
     @abstractmethod
     @contract(topics='list(str)', 
-              start='None|(float,t)', 
+              start='None|(float,t)',
               stop='None|(float,>t)')
     def read(self, topics, start=None, stop=None):
         """ 

@@ -66,6 +66,9 @@ def read_log(rawlog, signals=None, start=None, stop=None, quiet=False):
     else:
         stop = bounds[1]
     
+    start = float(start)
+    stop = float(stop)
+
     print('start: %s' % start)
     print('stop:  %s' % stop) 
     
@@ -88,7 +91,11 @@ def read_log(rawlog, signals=None, start=None, stop=None, quiet=False):
         if not quiet:
             if isinstance(value, np.ndarray):
                 p = '%15.4f'
-                x = ','.join([p % v for v in value])
+                if value.size > 1 and value.ndim == 1:
+                    x = ','.join([p % v for v in value])
+                else:
+                    x = str(value)
+
             else:
                 x = str(value)
 
